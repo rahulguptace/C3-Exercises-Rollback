@@ -12,24 +12,26 @@ jobs:
         - checkout # check out the code in the project directory
         - run: echo "hello world" # run the `echo` command
 
-    create_infrastructure:  
-    # The primary container, where your job's commands will run
-      executor: aws-cli/default
-      steps:
-        - checkout # check out the code in the project directory
-        - aws-cli/setup:
-            aws-access-key-id: AWS_ACCESS_KEY
-            aws-secret-access-key: AWS_ACCESS_SECRET
-            aws-region: AWS_REGION_NAME
-        - run: 
-            name: Create Cloudformation Stack
-            command: aws cloudformation deploy --template-file template.yml
-              --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:5}
-              --region us-east-1
+    configure_infrastructure: 
+        docker:
+          - image: python:3.7-alpine3.11
+        steps:
+          - checkout
+          - add_ssh_keys:
+              # You can get this ID in the section where you registered the SSH Key
+                fingerprints: ["21:75:14:4e:9c:a9:67:b4:18:62:37:e8:5a:bd:9c:51"] 
+          - run:
+              name: Install Ansible
+              command: |
+                apk add --update ansible
+          - run:
+              name: Run Playbook and Configure server
+              command: |
+                ansible-playbook -i inventory main-remote.yml
 # Sequential workflow
 workflows:
   # Name the workflow
   myWorkflow:
     jobs:
       - hello-world
-      - create_infrastructure
+      - configure_infrastructure
