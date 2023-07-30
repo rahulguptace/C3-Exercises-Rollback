@@ -1,7 +1,20 @@
 version: 2.1
 # Use a package of configuration called an orb.
-# orbs:
-#     aws-cli: circleci/aws-cli@3.1
+orbs:
+    aws-cli: circleci/aws-cli@3.1
+# Reusable section 
+commands:
+      # Exercise - Rollback
+  destroy_environment:
+    steps:
+      - run:
+          name: Destroy environment
+          # ${CIRCLE_WORKFLOW_ID} is a Built-in environment variable 
+          # ${CIRCLE_WORKFLOW_ID:0:5} takes the first 5 chars of the variable CIRCLE_CI_WORKFLOW_ID 
+          when: on_fail
+          command: |
+            aws cloudformation delete-stack --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:5}
+
 # Define the jobs we want to run for this project
 jobs:
     hello-world:  # Choose any name, such as `build`
@@ -11,6 +24,23 @@ jobs:
       steps:
         - checkout # check out the code in the project directory
         - run: echo "hello world" # run the `echo` command
+
+    # Exercise: Infrastructure Creation
+    create_infrastructure:  
+    # The primary container, where your job's commands will run
+      executor: aws-cli/default
+      steps:
+        - checkout # check out the code in the project directory
+        - aws-cli/setup:
+            aws-access-key-id: AWS_ACCESS_KEY
+            aws-secret-access-key: AWS_ACCESS_SECRET
+            aws-region: AWS_REGION_NAME
+        - run: 
+            name: Create Cloudformation Stack
+            command: aws cloudformation deploy --template-file template.yml
+              --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:5}
+              --region us-east-1
+
     # Exercise: Config and Deploy
     # configure_infrastructure: 
     #     docker:
@@ -38,7 +68,7 @@ jobs:
         - run:
             name: smoke test
             command: |
-              URL="https://blog.udacity.com/"
+              URL="https://blog.udacity1.com/"
               # Test if website exists
               if curl -s --head ${URL} 
               then
@@ -48,11 +78,16 @@ jobs:
                 echo "UnSuccessful"
                 return 1
               fi
+        - destroy_environment
+
 # Sequential workflow
 workflows:
   # Name the workflow
   myWorkflow:
     jobs:
       - hello-world
+      - create_infrastructure
       # - configure_infrastructure
-      - smoke_test
+      - smoke_test:
+          requires:
+            - create_infrastructure
