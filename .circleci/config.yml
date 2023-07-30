@@ -64,7 +64,6 @@ jobs:
     smoke_test:
       docker:
         - image: alpine:latest
-      when: always
       steps:
         - run: apk add --update curl
         - run:
@@ -89,6 +88,4 @@ workflows:
       - hello-world
       - create_infrastructure
       # - configure_infrastructure
-      - smoke_test:
-          requires:
-            - create_infrastructure
+      - smoke_test
