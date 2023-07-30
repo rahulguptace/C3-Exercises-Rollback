@@ -1,7 +1,7 @@
 version: 2.1
 # Use a package of configuration called an orb.
-orbs:
-    aws-cli: circleci/aws-cli@3.1
+# orbs:
+#     aws-cli: circleci/aws-cli@3.1
 # Define the jobs we want to run for this project
 jobs:
     hello-world:  # Choose any name, such as `build`
@@ -11,27 +11,48 @@ jobs:
       steps:
         - checkout # check out the code in the project directory
         - run: echo "hello world" # run the `echo` command
+    # Exercise: Config and Deploy
+    # configure_infrastructure: 
+    #     docker:
+    #       - image: python:3.10.12-alpine3.18
+    #     steps:
+    #       - checkout
+    #       - add_ssh_keys:
+    #           # You can get this ID in the section where you registered the SSH Key
+    #             fingerprints: ["21:75:14:4e:9c:a9:67:b4:18:62:37:e8:5a:bd:9c:51"] 
+    #       - run:
+    #           name: Install Ansible
+    #           command: |
+    #             apk add --update ansible
+    #       - run:
+    #           name: Run Playbook and Configure server
+    #           command: |
+    #             ansible-playbook -i inventory main-remote.yml
 
-    configure_infrastructure: 
-        docker:
-          - image: python:3.10.12-alpine3.18
-        steps:
-          - checkout
-          - add_ssh_keys:
-              # You can get this ID in the section where you registered the SSH Key
-                fingerprints: ["21:75:14:4e:9c:a9:67:b4:18:62:37:e8:5a:bd:9c:51"] 
-          - run:
-              name: Install Ansible
-              command: |
-                apk add --update ansible
-          - run:
-              name: Run Playbook and Configure server
-              command: |
-                ansible-playbook -i inventory main-remote.yml
+    # Exercise: Smoke Testing
+    smoke_test:
+      docker:
+        - image: alpine:latest
+      steps:
+        - run: apk add --update curl
+        - run:
+            name: smoke test
+            command: |
+              URL="https://blog.udacity.com/"
+              # Test if website exists
+              if curl -s --head ${URL} 
+              then
+                echo "Successful"
+                return 0
+              else
+                echo "UnSuccessful"
+                return 1
+              fi
 # Sequential workflow
 workflows:
   # Name the workflow
   myWorkflow:
     jobs:
       - hello-world
-      - configure_infrastructure
+      # - configure_infrastructure
+      - smoke_test
