@@ -6,6 +6,7 @@ orbs:
 commands:
       # Exercise - Rollback
   destroy_environment:
+    executor: aws-cli/default
     steps:
       - run:
           name: Destroy environment
