@@ -6,7 +6,6 @@ orbs:
 commands:
       # Exercise - Rollback
   destroy_environment:
-    executor: aws-cli/default
     steps:
       - run:
           name: Destroy environment
@@ -41,7 +40,8 @@ jobs:
             command: aws cloudformation deploy --template-file template.yml
               --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:5}
               --region us-east-1
-
+        - run: return 1
+        - destroy_environment
     # Exercise: Config and Deploy
     # configure_infrastructure: 
     #     docker:
@@ -69,7 +69,7 @@ jobs:
         - run:
             name: smoke test
             command: |
-              URL="https://blog.udacity1.com/"
+              URL="https://blog.udacity.com/"
               # Test if website exists
               if curl -s --head ${URL} 
               then
@@ -79,7 +79,6 @@ jobs:
                 echo "UnSuccessful"
                 return 1
               fi
-        - destroy_environment
 
 # Sequential workflow
 workflows:
